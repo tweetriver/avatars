@@ -54,7 +54,8 @@ class Avatar:
         logging.debug("[%s] Found profile image" % self.screen_name)
         return image['src']
       else:
-        return None
+        logging.debug("[%s] Could not find profile image" % self.screen_name)
+        return DEFAULT_PROFILE_IMAGE_URL
     except:
       return None
     
@@ -74,7 +75,7 @@ class App(webapp.RequestHandler):
         self.redirect(avatar.url)
       else:
         logging.debug("[%s] No avatar URL found" % screen_name)
-        self.redirect(DEFAULT_PROFILE_IMAGE_URL)
+        self.response.set_status(500, "Error")
     else:
       logging.debug("Screen name not provided")
       self.response.set_status(500, "Error")
