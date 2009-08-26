@@ -103,7 +103,7 @@ def main():
   """
   Starts the app
   """
-  logging.getLogger().setLevel(logging.DEBUG)
+  logging.getLogger().setLevel(logging.INFO)
   run_wsgi_app(application)
 
 if __name__ == "__main__":
