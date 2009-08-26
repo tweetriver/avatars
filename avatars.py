@@ -19,6 +19,11 @@ class Avatar:
     
   @property
   def url(self):
+    """
+    Retrieve the URL for the given screen_name
+    Try to get it from memcache first, otherwise try the guess URL
+    or actually go retrieve it (and store it in memcache for 15 minutes)
+    """
     try:
       url = memcache.get(self.key)
       if url is not None:
@@ -35,15 +40,21 @@ class Avatar:
       
   
   def _verified_guess(self):
-      try:
-        urlfetch.fetch(self.guessed_url, method='HEAD', follow_redirects=False)
-        logging.debug("[%s] Verified URL" % self.screen_name)
-        return self.guessed_url
-      except:
-        logging.debug("[%s] Could not verify URL" % self.screen_name)
-        return None
+    """
+    Verify (with a HEAD) that the "guessed" URL actually exists
+    """
+    try:
+      urlfetch.fetch(self.guessed_url, method='HEAD', follow_redirects=False)
+      logging.debug("[%s] Verified URL" % self.screen_name)
+      return self.guessed_url
+    except:
+      logging.debug("[%s] Could not verify URL" % self.screen_name)
+      return None
   
   def _url(self):
+    """
+    Retrieve the profile image URL
+    """
     try:
       profile = self._profile()
       if profile:
@@ -60,6 +71,9 @@ class Avatar:
       return DEFAULT_PROFILE_IMAGE_URL
     
   def _profile(self):
+    """
+    Retrieve the contents of the user profile
+    """
     try:
       logging.debug("[%s] Retrieving profile" % self.screen_name)
       return urlfetch.fetch(self.profile_url, follow_redirects=False).content
