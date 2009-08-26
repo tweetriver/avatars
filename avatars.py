@@ -81,7 +81,6 @@ class Avatar:
       logging.debug("[%s] Could not retrieve profile (%s for %s)" % (self.screen_name, e, self.profile_url))
       return None
       
-class App(webapp.RequestHandler):
   def get(self, screen_name, guessed_url=None):
     if len(screen_name):
       avatar = Avatar(screen_name, guessed_url)
@@ -97,6 +96,9 @@ class App(webapp.RequestHandler):
 application = webapp.WSGIApplication([(r'/(.*)/(.*)', App),
                                       (r'/(.*)', App)])
 def main():
+  """
+  Starts the app
+  """
   logging.getLogger().setLevel(logging.DEBUG)
   run_wsgi_app(application)
 
