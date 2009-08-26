@@ -7,6 +7,8 @@ from google.appengine.ext.webapp.util import run_wsgi_app
 import urllib2
 from BeautifulSoup import BeautifulSoup
 
+DEFAULT_PROFILE_IMAGE_URL = "http://static.twitter.com/images/default_profile_normal.png"
+
 class Avatar:
   
   def __init__(self, screen_name, guessed_url=None):
@@ -69,10 +71,10 @@ class App(webapp.RequestHandler):
     if len(screen_name):
       avatar = Avatar(screen_name, guessed_url)
       if avatar.url and len(avatar.url):
-        self.response.out.write(avatar.url)
+        self.redirect(avatar.url)
       else:
         logging.debug("[%s] No avatar URL found" % screen_name)
-        self.response.set_status(404, "Not Found")
+        self.redirect(DEFAULT_PROFILE_IMAGE_URL)
     else:
       logging.debug("Screen name not provided")
       self.response.set_status(500, "Error")
