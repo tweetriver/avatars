@@ -1,5 +1,5 @@
 import logging
-from base64 import b64decode
+from base64 import b64encode
 
 from google.appengine.api import memcache
 from google.appengine.ext import webapp
@@ -81,11 +81,12 @@ class Avatar:
     except Exception, e:
       logging.debug("[%s] Could not retrieve profile (%s for %s)" % (self.screen_name, e, self.profile_url))
       return None
-      
+
+class App(webapp.RequestHandler):  
   def get(self, screen_name, guessed_url=None):
     if len(screen_name):
       if guessed_url:
-        guessed_url = b64decode(guessed_url)
+        guessed_url = b64encode(guessed_url)
       avatar = Avatar(screen_name, guessed_url)
       if avatar.url and len(avatar.url):
         self.redirect(avatar.url)
