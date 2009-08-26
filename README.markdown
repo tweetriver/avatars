@@ -3,9 +3,11 @@
 The service is located [at AppSpot][1]
 
 The URL pattern is:
-    GET http://http://tweetriver-avatars.appspot.com/SCREEN_NAME
+    GET http://tweetriver-avatars.appspot.com/SCREEN_NAME
 and
-    GET http://http://tweetriver-avatars.appspot.com/SCREEN_NAME/GUESSED_URL
+    GET http://tweetriver-avatars.appspot.com/SCREEN_NAME/GUESSED_URL
+    
+Make sure you encode `GUESSED_URL` appropriately
 
 ## Running it locally
 
