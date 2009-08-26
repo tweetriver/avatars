@@ -46,6 +46,7 @@ class Avatar:
     try:
       profile = self._profile()
       if profile:
+        logging.debug("[%s] Parsing profile" % self.screen_name)
         soup = BeautifulSoup(self._profile())
         image = soup.find("img", {"alt": self.screen_name})
         logging.debug("[%s] Found profile image" % self.screen_name)
@@ -57,8 +58,10 @@ class Avatar:
     
   def _profile(self):
     try:
+      logging.debug("[%s] Retrieving profile" % self.screen_name)
       return urllib2.urlopen("http://m.twitter.com/%s" % self.screen_name).read()
     except:
+      logging.debug("[%s] Could not retrieve profile" % self.screen_name)
       return None
       
 class App(webapp.RequestHandler):
