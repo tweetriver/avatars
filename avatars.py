@@ -1,4 +1,5 @@
 import logging
+from base64 import b64decode
 
 from google.appengine.api import memcache
 from google.appengine.ext import webapp
@@ -83,6 +84,8 @@ class Avatar:
       
   def get(self, screen_name, guessed_url=None):
     if len(screen_name):
+      if guessed_url:
+        guessed_url = b64decode(guessed_url)
       avatar = Avatar(screen_name, guessed_url)
       if avatar.url and len(avatar.url):
         self.redirect(avatar.url)
