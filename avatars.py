@@ -3,8 +3,8 @@ import logging
 from google.appengine.api import memcache
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
+from google.appengine.api import urlfetch 
 
-import urllib2
 from BeautifulSoup import BeautifulSoup
 
 DEFAULT_PROFILE_IMAGE_URL = "http://static.twitter.com/images/default_profile_normal.png"
@@ -15,6 +15,7 @@ class Avatar:
     self.screen_name = screen_name
     self.key = "avatar_" + screen_name
     self.guessed_url = guessed_url
+    self.profile_url = "http://m.twitter.com/%s" % screen_name
     
   @property
   def url(self):
@@ -35,11 +36,9 @@ class Avatar:
   
   def _verified_guess(self):
       try:
-        request = urllib2.Request(self.guessed_url)
-        request.get_method = lambda: "HEAD"
-        urllib2.urlopen(request)
+        urlfetch.fetch(self.guessed_url, method='HEAD', follow_redirects=False)
         logging.debug("[%s] Verified URL" % self.screen_name)
-        return self.guess_url
+        return self.guessed_url
       except:
         logging.debug("[%s] Could not verify URL" % self.screen_name)
         return None
@@ -49,7 +48,7 @@ class Avatar:
       profile = self._profile()
       if profile:
         logging.debug("[%s] Parsing profile" % self.screen_name)
-        soup = BeautifulSoup(self._profile())
+        soup = BeautifulSoup(profile)
         image = soup.find("img", {"alt": self.screen_name})
         logging.debug("[%s] Found profile image" % self.screen_name)
         return image['src']
@@ -62,9 +61,9 @@ class Avatar:
   def _profile(self):
     try:
       logging.debug("[%s] Retrieving profile" % self.screen_name)
-      return urllib2.urlopen("http://m.twitter.com/%s" % self.screen_name).read()
-    except:
-      logging.debug("[%s] Could not retrieve profile" % self.screen_name)
+      return urlfetch.fetch(self.profile_url, follow_redirects=False).content
+    except Exception, e:
+      logging.debug("[%s] Could not retrieve profile (%s for %s)" % (self.screen_name, e, self.profile_url))
       return None
       
 class App(webapp.RequestHandler):
