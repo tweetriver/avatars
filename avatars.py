@@ -62,14 +62,18 @@ class Avatar:
         logging.debug("[%s] Parsing profile" % self.screen_name)
         soup = BeautifulSoup(profile)
         image = soup.find("img", {"alt": self.screen_name})
-        image_url = image['src']
-        logging.debug("[%s] Found profile image, %s" % (self.screen_name, image_url))
-        return image_url
+        if image:
+          image_url = image['src']
+          logging.debug("[%s] Found profile image, %s" % (self.screen_name, image_url))
+          return image_url
+        else:
+          logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
+          return DEFAULT_PROFILE_IMAGE_URL
       else:
-        logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
+        logging.debug("[%s] Could not retrieve profile source, storing default" % self.screen_name)
         return DEFAULT_PROFILE_IMAGE_URL
     except Exception, e:
-      logging.warn("[%s] Could not parse profile (%s parsing following source), storing default\n%s" % (self.screen_name, e, profile))
+      logging.warn("[%s] Could not parse profile (%s), storing default\" % (self.screen_name, e))
       return DEFAULT_PROFILE_IMAGE_URL
     
   def _profile(self):
