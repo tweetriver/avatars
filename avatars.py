@@ -73,7 +73,7 @@ class Avatar:
         logging.debug("[%s] Could not retrieve profile source, storing default" % self.screen_name)
         return DEFAULT_PROFILE_IMAGE_URL
     except Exception, e:
-      logging.warn("[%s] Could not parse profile (%s), storing default\" % (self.screen_name, e))
+      logging.warn("[%s] Could not parse profile (%s), storing default" % (self.screen_name, e))
       return DEFAULT_PROFILE_IMAGE_URL
     
   def _profile(self):
