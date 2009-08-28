@@ -66,9 +66,10 @@ class Avatar:
         logging.debug("[%s] Found profile image, %s" % (self.screen_name, image_url))
         return image_url
       else:
-        logging.debug("[%s] Could not find profile image" % self.screen_name)
+        logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
         return DEFAULT_PROFILE_IMAGE_URL
-    except:
+    except Exception, e:
+      logging.warn("[%s] Could not parse profile (%s), storing default" % (self.screen_name, e))
       return DEFAULT_PROFILE_IMAGE_URL
     
   def _profile(self):
