@@ -10,6 +10,9 @@ from BeautifulSoup import BeautifulSoup
 
 DEFAULT_PROFILE_IMAGE_URL = "http://static.twitter.com/images/default_profile_normal.png"
 
+# We pretend to be the iPhone for the Twitter mobile site
+IPHONE = "Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543a Safari/419.3"
+
 class Avatar:
   
   def __init__(self, screen_name, guessed_url=None):
@@ -82,7 +85,7 @@ class Avatar:
     """
     try:
       logging.debug("[%s] Retrieving profile" % self.screen_name)
-      return urlfetch.fetch(self.profile_url, follow_redirects=False).content
+      return urlfetch.fetch(self.profile_url, headers={'User-Agent': IPHONE}, follow_redirects=False).content
     except Exception, e:
       logging.debug("[%s] Could not retrieve profile (%s for %s)" % (self.screen_name, e, self.profile_url))
       return None
