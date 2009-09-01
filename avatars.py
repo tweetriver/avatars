@@ -13,7 +13,7 @@ DEFAULT_PROFILE_IMAGE_URL = "http://static.twitter.com/images/default_profile_no
 # We pretend to be the iPhone for the Twitter mobile site
 IPHONE = "Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543a Safari/419.3"
 
-class Avatar:
+class Avatar(object):
   
   def __init__(self, screen_name, guessed_url=None):
     self.screen_name = screen_name
@@ -30,18 +30,20 @@ class Avatar:
     """
     try:
       url = memcache.get(self.key)
-      if url is not None:
-        logging.debug("[%s] Retrieved URL from memcache" % self.screen_name)
-        return url
-      else:
-        url = self._verified_guess() or self._url()
-        if url:
+    except Exception, e:
+      logging.error('Error retrieving information from memcache (%s)' % e)
+    if url:
+      logging.debug("[%s] Retrieved URL from memcache" % self.screen_name)
+      return url
+    else:
+      url = self._verified_guess() or self._url()
+      if url:
+        try:
           logging.debug("[%s] Adding URL to memcache" % self.screen_name)
           memcache.add(self.key, url, 60 * 15)
-        return url
-    except:
-      logging.error('There was an error retrieving information from memcache')
-      
+        except Exception, e:
+          logging.error('Error adding information to memcache (%s)' % e)
+      return url
   
   def _verified_guess(self):
     """
@@ -59,35 +61,49 @@ class Avatar:
     """
     Retrieve the profile image URL
     """
-    try:
-      profile = self._profile()
-      if profile:
-        logging.debug("[%s] Parsing profile" % self.screen_name)
-        soup = BeautifulSoup(profile)
-        image = soup.find("img", {"alt": self.screen_name})
-        if image:
-          image_url = image['src']
-          logging.debug("[%s] Found profile image, %s" % (self.screen_name, image_url))
-          return image_url
-        else:
-          logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
-          return DEFAULT_PROFILE_IMAGE_URL
-      else:
-        logging.debug("[%s] Could not retrieve profile source, storing default" % self.screen_name)
-        return DEFAULT_PROFILE_IMAGE_URL
-    except Exception, e:
-      logging.warn("[%s] Could not parse profile (%s), storing default" % (self.screen_name, e))
-      return DEFAULT_PROFILE_IMAGE_URL
+    retrievers = [
+      ProfileRetriever("mobile", "http://m.twitter.com/%s" % self.screen_name, lambda soup: soup.find("td", {"class": "g"}).img['src']),
+      ProfileRetriever("normal", "http://twitter.com/%s" % self.screen_name, lambda soup: soup.find("img", {"id": "profile-image"})['src'])
+    ]
+    for retriever in retrievers:
+      url = retriever.retrieve()
+      if url:
+        return url
+    else:
+      logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
+      return DEFAULT_PROFILE_IMAGE_URL 
+      
+class ProfileRetriever(object):
+  
+  def __init__(self, name, profile_url, finder_func):
+    self.name = name
+    self.profile_url = profile_url
+    self.finder_func = finder_func
     
-  def _profile(self):
-    """
-    Retrieve the contents of the user profile
-    """
+  def retrieve(self):
+    profile = self._get()
+    if profile:
+      try:
+        logging.debug("Parsing '%s' profile" % self.profile_url)
+        # logging.debug(repr("%s" % profile))
+        soup = BeautifulSoup(profile)
+      except Exception, e:
+        logging.warn("Could not parse profile (%s)" % e)
+        return None
+      try:
+        return self.finder_func(soup)
+      except Exception, e:
+        logging.warn("Could not find URL in profile (%s)" % e)
+        return None
+    else:
+      return None
+    
+  def _get(self):
     try:
-      logging.debug("[%s] Retrieving profile" % self.screen_name)
+      logging.debug("Retrieving '%s' profile" % self.name)
       return urlfetch.fetch(self.profile_url, headers={'User-Agent': IPHONE}, follow_redirects=False).content
     except Exception, e:
-      logging.debug("[%s] Could not retrieve profile (%s for %s)" % (self.screen_name, e, self.profile_url))
+      logging.debug("Could not retrieve '%s' profile (%s for %s)" % (self.name, e, self.profile_url))
       return None
 
 class App(webapp.RequestHandler):  
@@ -111,7 +127,7 @@ def main():
   """
   Starts the app
   """
-  logging.getLogger().setLevel(logging.DEBUG)
+  logging.getLogger().setLevel(logging.INFO)
   run_wsgi_app(application)
 
 if __name__ == "__main__":
