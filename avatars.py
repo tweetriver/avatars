@@ -1,4 +1,4 @@
-import logging
+import logging, random
 from base64 import b64encode
 
 from google.appengine.api import memcache
@@ -8,7 +8,10 @@ from google.appengine.api import urlfetch
 
 from BeautifulSoup import BeautifulSoup
 
-DEFAULT_PROFILE_IMAGE_URL = "http://static.twitter.com/images/default_profile_normal.png"
+DEFAULT_PROFILE_IMAGE_URLS = [
+  'http://s.twimg.com/a/1255997062/images/default_profile_%d_normal.png' % n
+  for n in range(1, 6)
+]
 
 # We pretend to be the iPhone for the Twitter mobile site
 IPHONE = "Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543a Safari/419.3"
@@ -71,7 +74,7 @@ class Avatar(object):
         return url
     else:
       logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
-      return DEFAULT_PROFILE_IMAGE_URL 
+      return random.choice(DEFAULT_PROFILE_IMAGE_URLS)
       
 class ProfileRetriever(object):
   
