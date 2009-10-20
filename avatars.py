@@ -63,7 +63,7 @@ class Avatar(object):
     """
     retrievers = [
       ProfileRetriever("mobile", "http://m.twitter.com/%s" % self.screen_name, lambda soup: soup.find("td", {"class": "g"}).img['src']),
-      ProfileRetriever("normal", "http://twitter.com/%s" % self.screen_name, lambda soup: soup.find("img", {"id": "profile-image"})['src'])
+      ProfileRetriever("normal", "http://twitter.com/%s" % self.screen_name, lambda soup: soup.find("img", {"alt": self.screen_name})['src'])
     ]
     for retriever in retrievers:
       url = retriever.retrieve()
@@ -94,6 +94,7 @@ class ProfileRetriever(object):
         return self.finder_func(soup)
       except Exception, e:
         logging.warn("Could not find URL in profile (%s)" % e)
+        logging.debug(profile)
         return None
     else:
       return None
