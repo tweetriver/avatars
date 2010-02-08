@@ -14,7 +14,7 @@ DEFAULT_PROFILE_IMAGE_URLS = [
 ]
 
 # We pretend to be the iPhone for the Twitter mobile site
-IPHONE = "Mozilla/5.0 (iPhone; U; CPU like Mac OS X; en) AppleWebKit/420+ (KHTML, like Gecko) Version/3.0 Mobile/1A543a Safari/419.3"
+IPHONE = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.5; fr; rv:1.9.1b4) Gecko/20090423 Firefox/3.5b4"
 
 class Avatar(object):
   
@@ -36,13 +36,13 @@ class Avatar(object):
     except Exception, e:
       logging.error('Error retrieving information from memcache (%s)' % e)
     if url:
-      logging.debug("[%s] Retrieved URL from memcache" % self.screen_name)
+      logging.warn("[%s] Retrieved URL from memcache" % self.screen_name)
       return url
     else:
       url = self._verified_guess() or self._url()
       if url:
         try:
-          logging.debug("[%s] Adding URL to memcache" % self.screen_name)
+          logging.warn("[%s] Adding URL to memcache" % self.screen_name)
           memcache.add(self.key, url, 60 * 15)
         except Exception, e:
           logging.error('Error adding information to memcache (%s)' % e)
@@ -54,10 +54,10 @@ class Avatar(object):
     """
     try:
       urlfetch.fetch(self.guessed_url, method='HEAD', follow_redirects=False)
-      logging.debug("[%s] Verified URL" % self.screen_name)
+      logging.warn("[%s] Verified URL" % self.screen_name)
       return self.guessed_url
     except:
-      logging.debug("[%s] Could not verify URL" % self.screen_name)
+      logging.warn("[%s] Could not verify URL" % self.screen_name)
       return None
   
   def _url(self):
@@ -65,15 +65,15 @@ class Avatar(object):
     Retrieve the profile image URL
     """
     retrievers = [
-      ProfileRetriever("mobile", "http://m.twitter.com/%s" % self.screen_name, lambda soup: soup.find("td", {"class": "g"}).img['src']),
-      ProfileRetriever("normal", "http://twitter.com/%s" % self.screen_name, lambda soup: soup.find("img", {"alt": self.screen_name})['src'])
+      ProfileRetriever("normal", "http://twitter.com/%s" % self.screen_name, lambda soup: soup.find("img", {"id": "profile-image"})['src'])
     ]
     for retriever in retrievers:
       url = retriever.retrieve()
+      logging.warn(url)
       if url:
         return url
     else:
-      logging.debug("[%s] Could not find profile image, storing default" % self.screen_name)
+      logging.warn("[%s] Could not find profile image, storing default" % self.screen_name)
       return random.choice(DEFAULT_PROFILE_IMAGE_URLS)
       
 class ProfileRetriever(object):
@@ -87,8 +87,8 @@ class ProfileRetriever(object):
     profile = self._get()
     if profile:
       try:
-        logging.debug("Parsing '%s' profile" % self.profile_url)
-        # logging.debug(repr("%s" % profile))
+        logging.warn("Parsing '%s' profile" % self.profile_url)
+        logging.warn(repr("%s" % profile))
         soup = BeautifulSoup(profile)
       except Exception, e:
         logging.warn("Could not parse profile (%s)" % e)
@@ -97,17 +97,18 @@ class ProfileRetriever(object):
         return self.finder_func(soup)
       except Exception, e:
         logging.warn("Could not find URL in profile (%s)" % e)
-        logging.debug(profile)
+        logging.warn(repr("%s" % profile))
+        logging.warn(profile)
         return None
     else:
       return None
     
   def _get(self):
     try:
-      logging.debug("Retrieving '%s' profile" % self.name)
+      logging.warn("Retrieving '%s' profile" % self.name)
       return urlfetch.fetch(self.profile_url, headers={'User-Agent': IPHONE}, follow_redirects=False).content
     except Exception, e:
-      logging.debug("Could not retrieve '%s' profile (%s for %s)" % (self.name, e, self.profile_url))
+      logging.warn("Could not retrieve '%s' profile (%s for %s)" % (self.name, e, self.profile_url))
       return None
 
 class App(webapp.RequestHandler):  
@@ -119,10 +120,10 @@ class App(webapp.RequestHandler):
       if avatar.url and len(avatar.url):
         self.redirect(avatar.url)
       else:
-        logging.debug("[%s] No avatar URL found" % screen_name)
+        logging.warn("[%s] No avatar URL found" % screen_name)
         self.response.set_status(500, "Error")
     else:
-      logging.debug("Screen name not provided")
+      logging.warn("Screen name not provided")
       self.response.set_status(500, "Error")
 
 application = webapp.WSGIApplication([(r'/(.*)/(.*)', App),
